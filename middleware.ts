@@ -1,27 +1,61 @@
-import { type NextRequest } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
-const privatePaths = ['/dashboard', '/profile', '/log'];
-function isPrivate(pathname: string) {
-  return privatePaths.some((p) => pathname.startsWith(p));
-}
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
 
-export async function middleware(request: NextRequest) {
-  const { response, user } = await updateSession(request);
-  const pathname = request.nextUrl.pathname;
-  if (isPrivate(pathname) && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return Response.redirect(url);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // If Supabase is not configured, allow all requests to proceed.
+  if (!url || !key) {
+    return res;
   }
-  if (pathname === '/' && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return Response.redirect(url);
+
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          res.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const pathname = req.nextUrl.pathname;
+
+  // Public routes
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/auth') ||
+    pathname === '/'
+  ) {
+    // Optional UX: redirect logged-in users away from auth/landing
+    if (session && (pathname === '/' || pathname.startsWith('/login'))) {
+      const dashboardUrl = req.nextUrl.clone();
+      dashboardUrl.pathname = '/dashboard';
+      return NextResponse.redirect(dashboardUrl);
+    }
+    return res;
   }
-  return response;
+
+  // Protected routes
+  if (!session) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return res;
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/dashboard/:path*', '/profile/:path*', '/log/:path*', '/login'],
 };
