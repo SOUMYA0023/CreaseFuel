@@ -10,6 +10,7 @@ export async function logFoodManual(params: {
   quantity_g: number;
 }) {
   const supabase = await createClient();
+  if (!supabase) return { error: 'Unauthorized' };
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -45,6 +46,7 @@ export async function logFoodFromImage(params: {
   fat_g: number;
 }) {
   const supabase = await createClient();
+  if (!supabase) return { error: 'Unauthorized' };
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -70,6 +72,7 @@ export async function logFoodFromImage(params: {
 
 export async function deleteFoodEntry(id: string) {
   const supabase = await createClient();
+  if (!supabase) return { error: 'Unauthorized' };
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -31,11 +31,15 @@ export default async function DashboardPage() {
   const metrics = computeHealthMetrics(profile);
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
-  const { data: todayEntries } = await supabase
-    .from('food_entries')
-    .select('calories, protein_g, carbs_g, fat_g')
-    .eq('logged_at', today);
-
+  let todayEntries: { calories: number; protein_g: number; carbs_g: number; fat_g: number }[] | null = null;
+  let weekEntries: { logged_at: string; calories: number }[] | null = null;
+  if (supabase) {
+    const r = await supabase.from('food_entries').select('calories, protein_g, carbs_g, fat_g').eq('logged_at', today);
+    todayEntries = r.data;
+    const weekDates = getWeekDates();
+    const w = await supabase.from('food_entries').select('logged_at, calories').in('logged_at', weekDates);
+    weekEntries = w.data;
+  }
   const dayTotals = {
     calories: todayEntries?.reduce((s, e) => s + Number(e.calories), 0) ?? 0,
     protein_g: todayEntries?.reduce((s, e) => s + Number(e.protein_g), 0) ?? 0,
@@ -44,13 +48,9 @@ export default async function DashboardPage() {
   };
 
   const weekDates = getWeekDates();
-  const { data: weekEntries } = await supabase
-    .from('food_entries')
-    .select('logged_at, calories')
-    .in('logged_at', weekDates);
 
   const byDate = new Map<string, number>();
-  weekEntries?.forEach((e) => {
+  (weekEntries ?? []).forEach((e) => {
     const d = e.logged_at as string;
     byDate.set(d, (byDate.get(d) ?? 0) + Number(e.calories));
   });

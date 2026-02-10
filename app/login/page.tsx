@@ -4,10 +4,10 @@ import LoginForm from '@/components/LoginForm';
 
 export default async function LoginPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) redirect('/dashboard');
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) redirect('/dashboard');
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 px-4">

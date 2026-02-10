@@ -13,6 +13,7 @@ import type { HealthMetrics } from '@/types';
 
 export async function getProfile() {
   const supabase = await createClient();
+  if (!supabase) return null;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -35,6 +36,7 @@ export async function upsertProfile(params: {
   athlete_mode: boolean;
 }) {
   const supabase = await createClient();
+  if (!supabase) return { error: 'Unauthorized' };
   const {
     data: { user },
   } = await supabase.auth.getUser();

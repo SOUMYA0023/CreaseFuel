@@ -7,6 +7,9 @@ export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
+  if (!supabase) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -9,11 +9,11 @@ export default async function LogPage() {
   const metrics = profile ? computeHealthMetrics(profile) : null;
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
-  const { data: entries } = await supabase
-    .from('food_entries')
-    .select('*')
-    .eq('logged_at', today)
-    .order('created_at', { ascending: false });
+  let entries: unknown[] = [];
+  if (supabase) {
+    const { data } = await supabase.from('food_entries').select('*').eq('logged_at', today).order('created_at', { ascending: false });
+    entries = data ?? [];
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
