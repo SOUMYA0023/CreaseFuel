@@ -20,9 +20,9 @@ export function rateLimit(key: string): boolean {
 
 function cleanup() {
   const now = Date.now();
-  for (const [k, v] of store.entries()) {
+  store.forEach((v, k) => {
     if (now > v.resetAt) store.delete(k);
-  }
+  });
 }
 if (typeof setInterval !== 'undefined') {
   setInterval(cleanup, WINDOW_MS);

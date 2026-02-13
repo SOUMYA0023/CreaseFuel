@@ -3,19 +3,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { logFoodManual, logFoodFromImage, getVisionEstimate, deleteFoodEntry } from '@/actions/food';
-import type { HealthMetrics } from '@/types';
+import type { FoodEntry, HealthMetrics } from '@/types';
 import type { USDAFoodItem } from '@/types';
 
-interface EntryRow {
-  id: string;
-  food_name: string;
-  quantity_g: number;
-  calories: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  is_estimated: boolean;
-}
+type EntryRow = Pick<
+  FoodEntry,
+  | 'id'
+  | 'food_name'
+  | 'quantity_g'
+  | 'calories'
+  | 'protein_g'
+  | 'carbs_g'
+  | 'fat_g'
+  | 'is_estimated'
+>;
 
 export default function LogFoodClient({
   metrics,

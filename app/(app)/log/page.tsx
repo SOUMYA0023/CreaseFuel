@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/actions/profile';
 import { computeHealthMetrics } from '@/lib/health';
 import LogFoodClient from '@/components/LogFoodClient';
+import type { FoodEntry } from '@/types';
 
 export const revalidate = 0;
 
@@ -10,10 +11,10 @@ export default async function LogPage() {
   const metrics = profile ? computeHealthMetrics(profile) : null;
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
-  let entries: unknown[] = [];
+  let entries: FoodEntry[] = [];
   if (supabase) {
     const { data } = await supabase.from('food_entries').select('*').eq('logged_at', today).order('created_at', { ascending: false });
-    entries = data ?? [];
+    entries = (data ?? []) as FoodEntry[];
   }
 
   return (
