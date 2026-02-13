@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { getProfile, computeHealthMetrics } from '@/actions/profile';
+import { getProfile } from '@/actions/profile';
+import { computeHealthMetrics } from '@/lib/health';
 
 export const revalidate = 30;
 

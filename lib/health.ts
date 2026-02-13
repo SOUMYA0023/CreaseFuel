@@ -1,4 +1,4 @@
-import type { ActivityLevel, Goal, Gender } from '@/types';
+import type { ActivityLevel, Goal, Gender, HealthMetrics } from '@/types';
 
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
   sedentary: 1.2,
@@ -77,4 +77,37 @@ export function macroSplit(
   const fat_g = Math.round((goalCalories * 0.25) / 9);
   const carbs_g = carbsG(goalCalories, protein_g, fat_g);
   return { protein_g, carbs_g, fat_g };
+}
+
+export function computeHealthMetrics(profile: {
+  age: number;
+  gender: Gender;
+  height_cm: number;
+  weight_kg: number;
+  activity_level: ActivityLevel;
+  goal: Goal;
+  athlete_mode: boolean;
+}): HealthMetrics {
+  const bmr = bmrMifflinStJeor(
+    profile.weight_kg,
+    profile.height_cm,
+    profile.age,
+    profile.gender
+  );
+  const maintenance = maintenanceCalories(bmr, profile.activity_level);
+  const goal = goalCalories(maintenance, profile.goal);
+  const { protein_g, carbs_g, fat_g } = macroSplit(
+    profile.weight_kg,
+    goal,
+    profile.athlete_mode
+  );
+  return {
+    bmi: bmi(profile.weight_kg, profile.height_cm),
+    bmr,
+    maintenance_calories: maintenance,
+    goal_calories: goal,
+    protein_g,
+    carbs_g,
+    fat_g,
+  };
 }

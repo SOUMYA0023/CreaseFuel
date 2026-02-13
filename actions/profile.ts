@@ -2,14 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { ActivityLevel, Goal, Gender } from '@/types';
-import {
-  bmi,
-  bmrMifflinStJeor,
-  maintenanceCalories,
-  goalCalories,
-  macroSplit,
-} from '@/lib/health';
-import type { HealthMetrics } from '@/types';
 
 export async function getProfile() {
   const supabase = await createClient();
@@ -51,37 +43,4 @@ export async function upsertProfile(params: {
   );
   if (error) return { error: error.message };
   return {};
-}
-
-export function computeHealthMetrics(profile: {
-  age: number;
-  gender: Gender;
-  height_cm: number;
-  weight_kg: number;
-  activity_level: ActivityLevel;
-  goal: Goal;
-  athlete_mode: boolean;
-}): HealthMetrics {
-  const bmr = bmrMifflinStJeor(
-    profile.weight_kg,
-    profile.height_cm,
-    profile.age,
-    profile.gender
-  );
-  const maintenance = maintenanceCalories(bmr, profile.activity_level);
-  const goal = goalCalories(maintenance, profile.goal);
-  const { protein_g, carbs_g, fat_g } = macroSplit(
-    profile.weight_kg,
-    goal,
-    profile.athlete_mode
-  );
-  return {
-    bmi: bmi(profile.weight_kg, profile.height_cm),
-    bmr,
-    maintenance_calories: maintenance,
-    goal_calories: goal,
-    protein_g,
-    carbs_g,
-    fat_g,
-  };
 }

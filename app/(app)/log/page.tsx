@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { getProfile, computeHealthMetrics } from '@/actions/profile';
+import { getProfile } from '@/actions/profile';
+import { computeHealthMetrics } from '@/lib/health';
 import LogFoodClient from '@/components/LogFoodClient';
 
 export const revalidate = 0;

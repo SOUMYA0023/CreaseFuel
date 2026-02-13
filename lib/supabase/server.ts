@@ -16,3 +16,7 @@ export function createSupabaseServerClient() {
     }
   )
 }
+
+export function createClient() {
+  return createSupabaseServerClient()
+}
