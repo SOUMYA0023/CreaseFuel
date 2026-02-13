@@ -7,6 +7,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   const supabase = createClient();
@@ -18,7 +19,13 @@ export default function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      setMessage({ type: 'err', text: error.message });
+      const isUnconfirmed = /confirm|confirmed/i.test(error.message);
+      setMessage({
+        type: 'err',
+        text: isUnconfirmed
+          ? 'Email not confirmed. Please check your inbox (or resend the confirmation).'
+          : error.message,
+      });
       return;
     }
     window.location.href = '/dashboard';
@@ -28,13 +35,24 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/callback` },
+    });
     setLoading(false);
     if (error) {
       setMessage({ type: 'err', text: error.message });
       return;
     }
-    setMessage({ type: 'ok', text: 'Check your email to confirm, or sign in if you already have an account.' });
+    if (data?.session) {
+      window.location.href = '/dashboard';
+      return;
+    }
+    setMessage({
+      type: 'ok',
+      text: 'Check your email to confirm, then return here and sign in.',
+    });
   }
 
   async function handleGoogle() {
@@ -43,6 +61,22 @@ export default function LoginForm() {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/callback` },
     });
+  }
+
+  async function handleResend() {
+    if (!email) {
+      setMessage({ type: 'err', text: 'Enter your email first, then resend the confirmation.' });
+      return;
+    }
+    setResending(true);
+    setMessage(null);
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setResending(false);
+    if (error) {
+      setMessage({ type: 'err', text: error.message });
+      return;
+    }
+    setMessage({ type: 'ok', text: 'Confirmation email resent. Please check your inbox/spam.' });
   }
 
   return (
@@ -95,6 +129,14 @@ export default function LoginForm() {
         className="w-full rounded-lg border border-zinc-600 bg-zinc-900 py-2.5 font-medium text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
       >
         Continue with Google
+      </button>
+      <button
+        type="button"
+        onClick={handleResend}
+        disabled={loading || resending}
+        className="w-full rounded-lg border border-zinc-700 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 disabled:opacity-50"
+      >
+        {resending ? 'Resending…' : 'Resend confirmation email'}
       </button>
       {message && (
         <p className={message.type === 'err' ? 'text-red-400 text-sm' : 'text-brand-400 text-sm'}>
